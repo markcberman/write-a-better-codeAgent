@@ -48,7 +48,8 @@ async def execute_code_docker(code_to_run: str) -> ExecResult:
     """
     if docker_client is None:
         logger.error("Docker client not available. Cannot execute code.")
-        return {"status": "error", "output": None, "error": "Docker client not initialized.", "time_ms": 0.0}
+        #return {"status": "error", "output": None, "error": "Docker client not initialized.", "time_ms": 0.0}
+        return {"status": "not_run", "output": None, "error": "Docker client not initialized.", "time_ms": 0.0}
 
     if not code_to_run or not code_to_run.strip():
         logger.warning("No code provided to execute in Docker.")
@@ -63,7 +64,8 @@ async def execute_code_docker(code_to_run: str) -> ExecResult:
 
     container = None
     result: ExecResult = { # Default error result
-        "status": "error", "output": None, "error": "Container execution failed.", "time_ms": 0.0
+        #"status": "error", "output": None, "error": "Container execution failed.", "time_ms": 0.0
+        "status": "runtime_error", "output": None, "error": "Container execution failed.", "time_ms": 0.0
     }
     start_time = time.perf_counter() # Tiempo total de interacción Docker
 

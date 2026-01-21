@@ -64,6 +64,7 @@ coverage.xml
 # LangGraph specific
 .langchain.db
 .langchain/
+.langgraph_api/
 
 # Secrets (add if you ever store keys in files - which you shouldn't!)
 .env

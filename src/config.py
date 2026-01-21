@@ -11,8 +11,8 @@ EXECUTION_TIMEOUT_SECONDS = 10  # Aún no implementado efectivamente con exec
 ASSUMED_ENTRY_POINT_FUNC = "solve_problem"  # Función que el agente espera que el LLM cree
 
 # Model Configuration
-PREFERRED_ANTHROPIC_MODEL = "claude-3-5-sonnet-20240620"
-FALLBACK_ANTHROPIC_MODEL = "claude-3-haiku-20240307"
+PREFERRED_ANTHROPIC_MODEL = "claude-sonnet-4-5-20250929"
+FALLBACK_ANTHROPIC_MODEL = "claude-haiku-4-5-20251001"
 
 # Human Review Options
 HUMAN_REVIEW_OPTIONS = {

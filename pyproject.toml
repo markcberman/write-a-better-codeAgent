@@ -22,6 +22,7 @@ dependencies = [
     "tenacity",          # Retries for LLM calls
     "langsmith",         # For LangSmith tracing integration
     "httpx>=0.25.0",     # Common HTTP client used by other libs
+    "langgraph-cli[inmem]>=0.4.11",
 ]
 
 # [project.optional-dependencies]

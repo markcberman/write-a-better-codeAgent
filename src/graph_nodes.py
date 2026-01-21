@@ -128,7 +128,8 @@ async def execute_code_node(state: AgentState) -> Dict[str, Any]:
 
     # Mapear el resultado a las claves del AgentState
     return {
-        "execution_status": exec_result.get("status", "error"),
+        #"execution_status": exec_result.get("status", "error"),
+        "execution_status": exec_result.get("status", "runtime_error"),
         "execution_output": exec_result.get("output"),
         "execution_error": exec_result.get("error"),
         "execution_time_ms": exec_result.get("time_ms"),
