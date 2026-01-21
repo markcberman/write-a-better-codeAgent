@@ -13,6 +13,19 @@ This project implements a LangGraph agent designed to iteratively generate and i
 *   **Anthropic LLM Integration:** Uses Anthropic's Claude models (configurable) via `langchain-anthropic`.
 *   **LangGraph CLI Ready:** Exposes the compiled graph via `src/main.py` for easy serving with `langgraph dev`.
 
+## Development Notes
+
+This repository intentionally separates **graph definition** from **execution** to support both
+LangGraph server mode and local development without conflicts:
+
+- `src/main.py` – **Graph definition only**. This file is imported by `langgraph dev` and must not
+  include a custom checkpointer. Persistence is handled by the LangGraph runtime.
+- `src/run_local.py` – **Local CLI runner**. This entrypoint compiles the same graph with an explicit
+  `MemorySaver` checkpointer and executes it directly from the command line.
+
+This separation follows recommended LangGraph patterns and avoids issues where server-managed
+persistence conflicts with locally supplied checkpoint implementations.
+
 ## Architecture Overview
 
 The agent operates as a state machine defined by a LangGraph graph. Key components include:
@@ -29,7 +42,7 @@ The agent operates as a state machine defined by a LangGraph graph. Key componen
     *   `Dockerfile`: Defines a minimal Python environment with a non-root user.
     *   `docker_exec_script.py`: The script run inside the container. It reads the code, executes the target function (`solve_problem` by default), captures output/errors/timing, and prints results as JSON.
     *   `execution.py`: Contains the host-side logic to interact with the Docker client, run the container with the generated code mounted, and parse the JSON result.
-5.  **Agent Logic (`src/agent.py`):** Ties everything together. Defines the graph structure, compiles it, and provides the `run` method (though direct execution is now handled by `langgraph dev`).
+5.  **Agent Logic (`src/agent.py`):** Ties everything together. Defines the graph structure and compilation logic used by both the LangGraph server and the local runner.
 6.  **Configuration (`src/config.py`, `.env`):** Manages settings like API keys, model names, prompts, and iteration limits.
 7.  **Server Entry Point (`src/main.py`):** Sets up logging, loads the environment, initializes the agent, compiles the graph, and exposes it as `app` for the LangGraph CLI.
 
@@ -41,17 +54,28 @@ The agent operates as a state machine defined by a LangGraph graph. Key componen
     cd code_agent_project
     ```
 
-2.  **Create a virtual environment (recommended):**
-    ```bash
-    python -m venv .venv
-    source .venv/bin/activate # On Windows use `.venv\Scripts\activate`
-    ```
+2. **Set up a Python environment using `uv`:**
 
-3.  **Install dependencies:**
-    ```bash
-    pip install -r requirements.txt
-    # Or if using pyproject.toml with editable install:
-    # pip install -e .
+   This project uses **[`uv`](https://github.com/astral-sh/uv)** for fast, reproducible
+   Python environment and dependency management. The committed `uv.lock` file defines
+   the exact dependency versions.
+
+   From the project root:
+
+   ```bash
+   # Install uv if you don't already have it
+   pip install uv
+
+   # Create a virtual environment and install dependencies from uv.lock
+   uv sync
+   ```
+
+   This will:
+   - Create a virtual environment (by default in `.venv`)
+   - Install all dependencies pinned in `uv.lock`
+   - Ensure consistent environments across machines
+
+   > Note: `requirements.txt` is no longer used in this project.
     ```
 
 4.  **Configure Environment Variables:**
@@ -81,10 +105,32 @@ This command builds the image defined in `Dockerfile` and tags it as `code-execu
 
 This project is designed to be run using the LangGraph CLI.
 
+### Local Development (Without `langgraph dev`)
+
+For local testing and debugging, you can run the agent directly without starting the LangGraph
+server. This mode uses an in-memory checkpointer and executes the workflow end-to-end in a single
+Python process.
+
+From the project root:
+
+```bash
+python -m src.run_local \
+  --problem "Write a Python program that calculates the nth Fibonacci number" \
+  --max-iterations 1
+```
+
+Notes:
+- A `thread_id` is automatically generated if not provided.
+- Docker must still be available for secure code execution.
+- This mode is intended for development and debugging only; production usage should rely on
+  `langgraph dev` or a deployed LangGraph server.
+
+
+
 1.  **Start the LangGraph Server:**
     From the project root directory, run:
     ```bash
-    langgraph dev
+    langgraph dev --allow-blocking
     ```
     This command reads `langgraph.json`, finds the graph instance (`app` in `src/main.py`), and starts a FastAPI server with a UI (usually at `http://127.0.0.1:8000`).
 
@@ -129,4 +175,5 @@ This project is designed to be run using the LangGraph CLI.
     *   If `accept`, the state keeps the improved `current_code`.
 8.  **Execute Code:** The (potentially reverted or accepted) code is executed again in Docker.
 9.  **Loop:** The flow returns to the **Should Continue?** conditional edge.
+
 
